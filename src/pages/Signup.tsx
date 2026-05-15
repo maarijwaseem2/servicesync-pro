@@ -1,50 +1,128 @@
-import { Link } from "react-router-dom";
 import { useState } from "react";
-import { AuthLayout } from "@/components/AuthLayout";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import { api } from "../lib/api";
+import { decodeJwtPayload } from "../lib/jwt";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 
-const Signup = () => {
-  const [role, setRole] = useState<"customer" | "provider">("customer");
+export default function Signup() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("CUSTOMER");
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const [error, setError] = useState("");
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    try {
+      const { data } = await api.post("/auth/signup", {
+        email,
+        password,
+        role,
+        name,
+      });
+
+      const payload = decodeJwtPayload(data.access_token);
+
+      login(data.access_token, {
+        id: payload.sub,
+        email: payload.email,
+        role: payload.role,
+        name: payload.name || name,
+      });
+
+      if (payload.role === "PROVIDER") navigate("/provider");
+      else navigate("/");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Signup failed");
+    }
+  };
+
   return (
-    <AuthLayout
-      title="Create your account"
-      subtitle="Choose how you'll use HomeHero."
-      footer={<>Already have one? <Link to="/login" className="font-medium text-primary hover:underline">Log in</Link></>}
-    >
-      <div className="mb-5 grid grid-cols-2 gap-2 rounded-xl bg-secondary p-1">
-        {(["customer","provider"] as const).map(r => (
-          <button key={r} onClick={() => setRole(r)} className={cn("rounded-lg px-3 py-2 text-sm font-medium capitalize transition-colors", role === r ? "bg-card shadow-soft" : "text-muted-foreground")}>{r}</button>
-        ))}
-      </div>
-      <form className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Full name" />
-          <Field label="Phone" type="tel" />
-        </div>
-        <Field label="Email" type="email" />
-        <Field label="Password" type="password" />
-        {role === "customer" ? (
-          <Field label="City" />
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div><Label>Service category</Label>
-              <select className="mt-1.5 h-10 w-full rounded-md border bg-background px-3 text-sm">
-                <option>Electrician</option><option>Plumber</option><option>AC Repair</option><option>Cleaning</option><option>Carpenter</option>
-              </select>
+    <div className="flex justify-center items-center min-h-screen bg-slate-50 p-4">
+      <form
+        onSubmit={handleSignup}
+        className="p-8 bg-white border border-slate-200 shadow-sm rounded-xl space-y-6 w-full max-w-sm"
+      >
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900 text-center">
+          Join ServiceSync Pro
+        </h2>
+
+        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+
+        <div className="space-y-4">
+          <Input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Full Name"
+            required
+          />
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email Address"
+            required
+          />
+          <Input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            required
+          />
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">
+              I want to:
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="CUSTOMER"
+                  checked={role === "CUSTOMER"}
+                  onChange={(e) => setRole(e.target.value)}
+                />
+                <span className="text-sm">Find Services</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="role"
+                  value="PROVIDER"
+                  checked={role === "PROVIDER"}
+                  onChange={(e) => setRole(e.target.value)}
+                />
+                <span className="text-sm">Offer Services</span>
+              </label>
             </div>
-            <Field label="Experience (years)" type="number" />
-            <Field label="City / area" />
           </div>
-        )}
-        <Button variant="hero" size="lg" className="w-full">Create account</Button>
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full bg-slate-900 text-white hover:bg-slate-800"
+        >
+          Sign Up
+        </Button>
+
+        <p className="text-center text-sm text-slate-600">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="text-slate-900 font-semibold hover:underline"
+          >
+            Log In
+          </Link>
+        </p>
       </form>
-    </AuthLayout>
+    </div>
   );
-};
-
-const Field = ({ label, ...rest }: any) => (<div><Label>{label}</Label><Input className="mt-1.5" {...rest} /></div>);
-
-export default Signup;
+}

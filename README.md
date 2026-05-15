@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# ServiceSync Pro
 
-TODO: Document your project here
+A professional platform to book trusted home services.
