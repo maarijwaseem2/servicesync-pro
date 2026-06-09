@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, assetUrl } from "@/lib/api";
 import { toast } from "sonner";
 
 import { Link, useParams } from "react-router-dom";
@@ -53,7 +53,7 @@ const ServiceDetail = () => {
           <div>
             <div className="relative aspect-[21/9] w-full overflow-hidden rounded-3xl shadow-soft">
               <img
-                src={service.imageUrl || "/assets/deep-cleaning.jfif"}
+                src={service.imageUrl ? assetUrl(service.imageUrl) : "/assets/deep-cleaning.jfif"}
                 alt={service.title}
                 className="h-full w-full object-cover"
               />
@@ -135,7 +135,7 @@ const ServiceDetail = () => {
                         {p.name} <BadgeCheck className="h-4 w-4 text-primary" />
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Verified Pro · Mumbai Area
+                        Verified Pro · Pakistan
                       </div>
                       <div className="mt-1 flex items-center gap-1 text-xs text-warning">
                         <Star className="h-3 w-3 fill-current" /> 4.9 · 120 jobs

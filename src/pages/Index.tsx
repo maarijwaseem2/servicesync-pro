@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
   Calendar,
@@ -16,10 +16,14 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import heroImg from "@/assets/hero-services.jpg";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, assetUrl } from "@/lib/api";
 import { getServiceImage } from "@/lib/utils";
+import { useState } from "react";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+
   const { data: remoteCategories = [] } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
@@ -40,7 +44,7 @@ const Index = () => {
     id: s.id,
     name: s.title,
     price: s.price,
-    img: s.imageUrl || getServiceImage(s.title, s.category?.name || ""),
+    img: s.imageUrl ? assetUrl(s.imageUrl) : getServiceImage(s.title, s.category?.name || ""),
     rating: 4.9,
     reviews: 150,
   }));
@@ -50,6 +54,21 @@ const Index = () => {
     image: getServiceImage(c.name),
     count: c.services?.length || 0,
   }));
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    const matchedCategory = (remoteCategories as any[]).find((c: any) =>
+      c.name.toLowerCase().includes(q.toLowerCase()),
+    );
+    if (q && matchedCategory) {
+      navigate(`/services?category=${matchedCategory.id}`);
+    } else if (q) {
+      navigate(`/services?q=${encodeURIComponent(q)}`);
+    } else {
+      navigate("/services");
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -74,20 +93,23 @@ const Index = () => {
               doorstep in as little as 60 minutes.
             </p>
 
-            <div className="mt-8 flex flex-col gap-2 rounded-2xl border bg-card p-2 shadow-soft sm:flex-row">
+            <form
+              onSubmit={handleSearch}
+              className="mt-8 flex flex-col gap-2 rounded-2xl border bg-card p-2 shadow-soft sm:flex-row"
+            >
               <div className="flex flex-1 items-center gap-2 px-3">
                 <Search className="h-5 w-5 text-muted-foreground" />
                 <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="What do you need fixed today?"
                   className="border-0 shadow-none focus-visible:ring-0"
                 />
               </div>
-              <Button asChild variant="hero" size="lg">
-                <Link to="/services">
-                  Find a pro <ArrowRight />
-                </Link>
+              <Button type="submit" variant="hero" size="lg">
+                Find a pro <ArrowRight />
               </Button>
-            </div>
+            </form>
 
             <div className="mt-8 flex flex-wrap gap-6 text-sm text-muted-foreground">
               <span className="flex items-center gap-2">

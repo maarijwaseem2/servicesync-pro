@@ -44,6 +44,7 @@ const ProviderBookings = () => {
       <div className="flex gap-2 overflow-x-auto border-b">
         {tabs.map((t) => (
           <button
+            type="button"
             key={t}
             onClick={() => setTab(t)}
             className={cn(

@@ -18,7 +18,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "../hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../lib/api";
+import { api, assetUrl } from "../lib/api";
 import { toast } from "sonner";
 
 const slots = [
@@ -78,8 +78,10 @@ const BookingForm = () => {
     try {
       await api.post("/bookings", {
         serviceId: service.id,
+        providerId: service.provider?.id ?? null,
         date: format(date, "yyyy-MM-dd"),
         time: slot,
+        totalAmount: Number(service.price) + 5,
         paymentMethod: payment,
         specialInstructions: (e.target as any).notes?.value || "",
       });
@@ -262,7 +264,7 @@ const BookingForm = () => {
               <div className="flex items-center gap-3">
                 <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border">
                   <img
-                    src={service.imageUrl || "/assets/deep-cleaning.jfif"}
+                    src={service.imageUrl ? assetUrl(service.imageUrl) : "/assets/deep-cleaning.jfif"}
                     alt={service.title}
                     className="h-full w-full object-cover"
                   />

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, assetUrl } from "@/lib/api";
 import { cn, getServiceImage } from "@/lib/utils";
 import {
   Sparkles,
@@ -36,7 +36,7 @@ import { Slider } from "@/components/ui/slider";
 const Services = () => {
   const [params] = useSearchParams();
   const [cat, setCat] = useState<string | null>(params.get("category"));
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(params.get("q") ?? "");
   const [price, setPrice] = useState([200]);
   const [minRating, setMinRating] = useState(0);
 
@@ -62,7 +62,7 @@ const Services = () => {
         id: s.id,
         name: s.title,
         price: Number(s.price),
-        img: s.imageUrl || getServiceImage(s.title, s.category?.name || ""),
+        img: s.imageUrl ? assetUrl(s.imageUrl) : getServiceImage(s.title, s.category?.name || ""),
         rating: 4.9,
         reviews: 150,
         category: s.category?.id?.toString() || "",
@@ -113,6 +113,7 @@ const Services = () => {
                 <div className="mb-2 text-sm font-medium">Category</div>
                 <div className="space-y-1">
                   <button
+                    type="button"
                     onClick={() => setCat(null)}
                     className={cn(
                       "block w-full rounded-lg px-3 py-2 text-left text-sm",
@@ -125,6 +126,7 @@ const Services = () => {
                   </button>
                   {categoriesList.map((c: any) => (
                     <button
+                      type="button"
                       key={c.id}
                       onClick={() => setCat(c.id)}
                       className={cn(
@@ -158,6 +160,7 @@ const Services = () => {
                 <div className="flex gap-1">
                   {[0, 3, 4, 4.5].map((r) => (
                     <button
+                      type="button"
                       key={r}
                       onClick={() => setMinRating(r)}
                       className={cn(
