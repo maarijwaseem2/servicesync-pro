@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Plus, Search, MoreVertical } from "lucide-react";
+import { Search, MoreVertical } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,17 +32,14 @@ const Leads = () => {
       variant="crm"
       title="Leads"
       subtitle="Track and manage all your sales leads."
-      actions={
-        <Button variant="hero">
-          <Plus /> Add lead
-        </Button>
-      }
     >
       <div className="rounded-2xl border bg-card shadow-soft">
         <div className="flex items-center gap-3 border-b p-4">
           <div className="flex flex-1 items-center gap-2 rounded-lg border bg-background px-3">
             <Search className="h-4 w-4 text-muted-foreground" />
             <Input
+              name="search-leads"
+              aria-label="Search leads"
               placeholder="Search leads..."
               className="border-0 shadow-none focus-visible:ring-0"
             />

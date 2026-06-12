@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { ScrollToTop } from "./components/ScrollToTop";
 
 // Redirect admin/provider away from the public-facing website
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
@@ -16,9 +17,6 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 import Index from "./pages/Index";
-import About from "./pages/About";
-import Careers from "./pages/Careers";
-import Press from "./pages/Press";
 import HowItWorks from "./pages/HowItWorks";
 import NotFound from "./pages/NotFound";
 import Services from "./pages/Services";
@@ -42,7 +40,6 @@ import AdminProviders from "./pages/admin/Providers";
 import AdminCustomers from "./pages/admin/Customers";
 import AdminBookings from "./pages/admin/Bookings";
 import AdminReviews from "./pages/admin/Reviews";
-import AdminSettings from "./pages/admin/Settings";
 import CRMLogin from "./pages/crm/Login";
 import CRMDashboard from "./pages/crm/Dashboard";
 import Leads from "./pages/crm/Leads";
@@ -59,12 +56,12 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
-        <BrowserRouter>
+        <BrowserRouter
+          future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+        >
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<PublicRoute><Index /></PublicRoute>} />
-            <Route path="/about" element={<About />} />
-            <Route path="/careers" element={<Careers />} />
-            <Route path="/press" element={<Press />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/services" element={<Services />} />
             <Route path="/services/:id" element={<ServiceDetail />} />
@@ -107,7 +104,6 @@ const App = () => (
               <Route path="/admin/customers" element={<AdminCustomers />} />
               <Route path="/admin/bookings" element={<AdminBookings />} />
               <Route path="/admin/reviews" element={<AdminReviews />} />
-              <Route path="/admin/settings" element={<AdminSettings />} />
             </Route>
 
             <Route path="/crm/login" element={<CRMLogin />} />

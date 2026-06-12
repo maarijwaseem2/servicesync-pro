@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, assetUrl } from "@/lib/api";
-import { Plus, Trash2, X, Clock, ImagePlus } from "lucide-react";
+import { Plus, Trash2, X, Clock, ImagePlus, Pencil } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,7 @@ const statusBadge = (status: string) => {
 const ProviderServices = () => {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ServiceForm>(empty);
   const [error, setError] = useState("");
   const [creatingCategory, setCreatingCategory] = useState(false);
@@ -87,15 +88,13 @@ const ProviderServices = () => {
     },
   });
 
-  const createService = useMutation({
-    mutationFn: (body: object) => api.post("/services", body),
+  const saveService = useMutation({
+    mutationFn: ({ id, body }: { id: string | null; body: object }) =>
+      id ? api.patch(`/services/${id}`, body) : api.post("/services", body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["services", "mine"] });
-      setShowForm(false);
-      setForm(empty);
-      setImageFile(null);
-      setImagePreview(null);
-      setError("");
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+      closeForm();
     },
     onError: (err: any) => {
       setError(err?.response?.data?.message || "Failed to save service.");
@@ -142,18 +141,49 @@ const ProviderServices = () => {
       }
     }
 
-    createService.mutate({
-      title: form.title,
-      description: form.description,
-      price: Number(form.price),
-      duration: form.duration,
-      categoryId: form.categoryId,
-      ...(imageUrl ? { imageUrl } : {}),
+    saveService.mutate({
+      id: editingId,
+      body: {
+        title: form.title,
+        description: form.description,
+        price: Number(form.price),
+        duration: form.duration,
+        categoryId: form.categoryId,
+        ...(imageUrl ? { imageUrl } : {}),
+      },
     });
+  };
+
+  const openAdd = () => {
+    setEditingId(null);
+    setForm(empty);
+    setImageFile(null);
+    setImagePreview(null);
+    setError("");
+    setCreatingCategory(false);
+    setShowForm(true);
+  };
+
+  const openEdit = (s: any) => {
+    setEditingId(s.id);
+    setForm({
+      title: s.title || "",
+      description: s.description || "",
+      price: String(s.price ?? ""),
+      duration: s.duration || "",
+      categoryId: s.category?.id || "",
+      newCategoryName: "",
+    });
+    setImageFile(null);
+    setImagePreview(s.imageUrl ? assetUrl(s.imageUrl) : null);
+    setError("");
+    setCreatingCategory(false);
+    setShowForm(true);
   };
 
   const closeForm = () => {
     setShowForm(false);
+    setEditingId(null);
     setForm(empty);
     setImageFile(null);
     setImagePreview(null);
@@ -163,7 +193,7 @@ const ProviderServices = () => {
 
   if (isLoading) return <div>Loading...</div>;
 
-  const isBusy = uploadImage.isPending || createService.isPending;
+  const isBusy = uploadImage.isPending || saveService.isPending;
 
   return (
     <DashboardShell
@@ -171,7 +201,7 @@ const ProviderServices = () => {
       title="My Services"
       subtitle="Manage the services you offer. New services go live after admin approval."
       actions={
-        <Button variant="hero" onClick={() => { setForm(empty); setError(""); setShowForm(true); }}>
+        <Button variant="hero" onClick={openAdd}>
           <Plus /> Add service
         </Button>
       }
@@ -181,7 +211,9 @@ const ProviderServices = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md overflow-y-auto max-h-[90vh] rounded-2xl border bg-card p-6 shadow-elevated">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-display text-xl font-bold">Add new service</h2>
+              <h2 className="font-display text-xl font-bold">
+                {editingId ? "Edit service" : "Add new service"}
+              </h2>
               <button type="button" aria-label="Close" onClick={closeForm} className="rounded-lg p-1 hover:bg-secondary">
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
@@ -196,7 +228,7 @@ const ProviderServices = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Image upload */}
               <div>
-                <label className="mb-1 block text-sm font-medium">Service image</label>
+                <span className="mb-1 block text-sm font-medium">Service image</span>
                 <div
                   className="relative flex min-h-[120px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-input bg-secondary/30 transition-colors hover:bg-secondary/50"
                   onClick={() => fileInputRef.current?.click()}
@@ -242,8 +274,10 @@ const ProviderServices = () => {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">Title</label>
+                <label className="mb-1 block text-sm font-medium" htmlFor="ps-title">Title</label>
                 <Input
+                  id="ps-title"
+                  name="title"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="e.g. AC Installation"
@@ -252,8 +286,10 @@ const ProviderServices = () => {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">Description</label>
+                <label className="mb-1 block text-sm font-medium" htmlFor="ps-desc">Description</label>
                 <textarea
+                  id="ps-desc"
+                  name="description"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="Describe what this service includes..."
@@ -264,8 +300,10 @@ const ProviderServices = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Price ($)</label>
+                  <label className="mb-1 block text-sm font-medium" htmlFor="ps-price">Price ($)</label>
                   <Input
+                    id="ps-price"
+                    name="price"
                     type="number"
                     min="0"
                     value={form.price}
@@ -275,8 +313,10 @@ const ProviderServices = () => {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Duration</label>
+                  <label className="mb-1 block text-sm font-medium" htmlFor="ps-duration">Duration</label>
                   <Input
+                    id="ps-duration"
+                    name="duration"
                     value={form.duration}
                     onChange={(e) => setForm({ ...form, duration: e.target.value })}
                     placeholder="e.g. 2 hours"
@@ -315,6 +355,8 @@ const ProviderServices = () => {
               {creatingCategory && (
                 <div className="flex gap-2">
                   <Input
+                    name="newCategoryName"
+                    aria-label="New category name"
                     value={form.newCategoryName}
                     onChange={(e) => setForm({ ...form, newCategoryName: e.target.value })}
                     placeholder="New category name"
@@ -339,9 +381,11 @@ const ProviderServices = () => {
                 </div>
               )}
 
-              <p className="rounded-lg bg-yellow-50 px-3 py-2 text-xs text-yellow-700">
-                Your service will be reviewed by an admin before going live.
-              </p>
+              {!editingId && (
+                <p className="rounded-lg bg-yellow-50 px-3 py-2 text-xs text-yellow-700">
+                  Your service will be reviewed by an admin before going live.
+                </p>
+              )}
 
               <div className="flex gap-3 pt-2">
                 <Button
@@ -352,8 +396,10 @@ const ProviderServices = () => {
                 >
                   {uploadImage.isPending
                     ? "Uploading image..."
-                    : createService.isPending
-                    ? "Submitting..."
+                    : saveService.isPending
+                    ? "Saving..."
+                    : editingId
+                    ? "Save changes"
                     : "Submit for approval"}
                 </Button>
                 <Button type="button" variant="outline" onClick={closeForm}>
@@ -399,6 +445,13 @@ const ProviderServices = () => {
                 )}
                 <div className="mt-2">{statusBadge(s.status)}</div>
                 <div className="mt-3 flex gap-2 border-t pt-3">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => openEdit(s)}
+                  >
+                    <Pencil className="h-3.5 w-3.5" /> Edit
+                  </Button>
                   <Button
                     size="sm"
                     variant="ghost"

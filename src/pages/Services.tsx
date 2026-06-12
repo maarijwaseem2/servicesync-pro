@@ -56,30 +56,54 @@ const Services = () => {
     },
   });
 
+  const { data: allReviews = [] } = useQuery({
+    queryKey: ["reviews"],
+    queryFn: () => api.get("/reviews").then((r) => r.data),
+  });
+
+  // serviceId -> { avg, count } from real customer reviews
+  const ratingsByService = useMemo(() => {
+    const map: Record<string, { sum: number; count: number }> = {};
+    (allReviews as any[]).forEach((r: any) => {
+      const sid = r.service?.id;
+      if (!sid || !r.rating) return;
+      if (!map[sid]) map[sid] = { sum: 0, count: 0 };
+      map[sid].sum += r.rating;
+      map[sid].count += 1;
+    });
+    return map;
+  }, [allReviews]);
+
   const filtered = useMemo(() => {
     return remoteServices
-      .map((s: any) => ({
-        id: s.id,
-        name: s.title,
-        price: Number(s.price),
-        img: s.imageUrl ? assetUrl(s.imageUrl) : getServiceImage(s.title, s.category?.name || ""),
-        rating: 4.9,
-        reviews: 150,
-        category: s.category?.id?.toString() || "",
-      }))
+      .map((s: any) => {
+        const stats = ratingsByService[s.id];
+        return {
+          id: s.id,
+          name: s.title,
+          desc: s.description,
+          price: Number(s.price),
+          img: s.imageUrl ? assetUrl(s.imageUrl) : getServiceImage(s.title, s.category?.name || ""),
+          rating: stats ? Number((stats.sum / stats.count).toFixed(1)) : null,
+          reviews: stats?.count || 0,
+          category: s.category?.id?.toString() || "",
+        };
+      })
       .filter(
         (s: any) =>
           (!cat || s.category === cat) &&
           (!q || s.name.toLowerCase().includes(q.toLowerCase())) &&
           s.price <= price[0] &&
-          s.rating >= minRating,
+          (minRating === 0 || (s.rating ?? 0) >= minRating),
       );
-  }, [remoteServices, cat, q, price, minRating]);
+  }, [remoteServices, ratingsByService, cat, q, price, minRating]);
 
-  const categoriesList = remoteCategories.map((c: any) => ({
-    id: c.id.toString(),
-    name: c.name,
-  }));
+  const categoriesList = remoteCategories
+    .filter((c: any) => c.isActive !== false)
+    .map((c: any) => ({
+      id: c.id.toString(),
+      name: c.name,
+    }));
 
   return (
     <div className="min-h-screen">
@@ -93,6 +117,8 @@ const Services = () => {
           <div className="mt-6 flex items-center gap-2 rounded-2xl border bg-card p-2 shadow-soft">
             <Search className="ml-2 h-5 w-5 text-muted-foreground" />
             <Input
+              name="search-services"
+              aria-label="Search services"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search services..."
@@ -178,7 +204,7 @@ const Services = () => {
             </div>
           </aside>
 
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid content-start gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {filtered.map((s) => (
               <Link
                 key={s.id}
@@ -193,10 +219,16 @@ const Services = () => {
                   />
                 </div>
                 <div className="p-5 flex flex-col flex-1">
-                  <div className="flex items-center gap-1 text-xs text-warning">
-                    <Star className="h-3 w-3 fill-current" /> {s.rating}{" "}
-                    <span className="text-muted-foreground">({s.reviews})</span>
-                  </div>
+                  {s.rating ? (
+                    <div className="flex items-center gap-1 text-xs text-warning">
+                      <Star className="h-3 w-3 fill-current" /> {s.rating}{" "}
+                      <span className="text-muted-foreground">({s.reviews})</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Star className="h-3 w-3" /> No reviews yet
+                    </div>
+                  )}
                   <div className="mt-1 font-display text-lg font-semibold">
                     {s.name}
                   </div>

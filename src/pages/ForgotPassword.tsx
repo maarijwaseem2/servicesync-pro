@@ -11,7 +11,7 @@ const ForgotPassword = () => (
     footer={<>Remembered it? <Link to="/login" className="font-medium text-primary hover:underline">Log in</Link></>}
   >
     <form className="space-y-4">
-      <div><Label>Email or phone</Label><Input className="mt-1.5" placeholder="you@email.com" /></div>
+      <div><Label htmlFor="forgot-identifier">Email or phone</Label><Input id="forgot-identifier" name="identifier" autoComplete="email" className="mt-1.5" placeholder="you@email.com" /></div>
       <Button variant="hero" size="lg" className="w-full">Send reset link</Button>
     </form>
   </AuthLayout>

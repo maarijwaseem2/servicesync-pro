@@ -56,21 +56,33 @@ export default function Signup() {
 
         <div className="space-y-4">
           <Input
+            id="signup-name"
+            name="name"
             type="text"
+            autoComplete="name"
+            aria-label="Full name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Full Name"
             required
           />
           <Input
+            id="signup-email"
+            name="email"
             type="email"
+            autoComplete="email"
+            aria-label="Email address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email Address"
             required
           />
           <Input
+            id="signup-password"
+            name="password"
             type="password"
+            autoComplete="new-password"
+            aria-label="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
@@ -78,9 +90,9 @@ export default function Signup() {
           />
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">
+            <span className="block text-sm font-medium text-slate-700">
               I want to:
-            </label>
+            </span>
             <div className="flex gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input

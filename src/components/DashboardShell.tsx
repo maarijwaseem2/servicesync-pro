@@ -9,7 +9,6 @@ import {
   Briefcase,
   Tags,
   Users,
-  Settings,
   Star,
   Home,
   Wrench,
@@ -40,7 +39,6 @@ const adminNav: Item[] = [
   { to: "/crm/leads", label: "Leads", icon: Users },
   { to: "/crm/pipeline", label: "Pipeline", icon: Briefcase },
   { to: "/admin/reviews", label: "Reviews", icon: Star },
-  { to: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 const variants = { provider: providerNav, admin: adminNav, crm: adminNav };

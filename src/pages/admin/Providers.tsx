@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { toast } from "sonner";
 import {
   BadgeCheck,
   Star,
@@ -9,19 +10,80 @@ import {
   ClipboardList,
   CheckCircle2,
   XCircle,
+  Check,
+  Trash2,
+  Clock,
 } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/StatusBadge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const providerStatusBadge = (status?: string) => {
+  if (status === "APPROVED")
+    return (
+      <span className="inline-flex items-center gap-1 text-primary">
+        <BadgeCheck className="h-4 w-4" /> Approved
+      </span>
+    );
+  if (status === "REJECTED")
+    return (
+      <span className="inline-flex items-center gap-1 text-destructive">
+        <XCircle className="h-4 w-4" /> Rejected
+      </span>
+    );
+  return (
+    <span className="inline-flex items-center gap-1 text-yellow-600">
+      <Clock className="h-4 w-4" /> Pending
+    </span>
+  );
+};
 
 const AdminProviders = () => {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: () => api.get("/users").then((r) => r.data),
+  });
+
+  const setStatus = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      api.patch(`/users/${id}/provider-status`, { status }),
+    onSuccess: (_res, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+      toast.success(
+        vars.status === "APPROVED" ? "Provider approved" : "Provider rejected",
+      );
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Failed to update provider"),
+  });
+
+  const deleteProvider = useMutation({
+    mutationFn: (id: string) => api.delete(`/users/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      setDeleteTarget(null);
+      setSelected(null);
+      toast.success("Provider deleted");
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Failed to delete provider"),
   });
 
   const { data: bookings = [] } = useQuery({
@@ -107,6 +169,8 @@ const AdminProviders = () => {
             <div className="flex flex-1 items-center gap-2 rounded-lg border bg-background px-3">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
+                name="search-providers"
+                aria-label="Search providers"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search providers..."
@@ -123,7 +187,7 @@ const AdminProviders = () => {
                   <th>Area</th>
                   <th>Rating</th>
                   <th>Jobs</th>
-                  <th>Verified</th>
+                  <th>Status</th>
                   <th className="pr-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -171,21 +235,56 @@ const AdminProviders = () => {
                       )}
                     </td>
                     <td className="font-semibold">{p.totalJobs}</td>
-                    <td>
-                      <span className="inline-flex items-center gap-1 text-primary">
-                        <BadgeCheck className="h-4 w-4" /> Verified
-                      </span>
-                    </td>
+                    <td>{providerStatusBadge(p.providerStatus)}</td>
                     <td className="pr-4 text-right">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          setSelected(selected?.id === p.id ? null : p)
-                        }
-                      >
-                        {selected?.id === p.id ? "Close" : "View"}
-                      </Button>
+                      <div className="inline-flex items-center gap-1">
+                        {p.providerStatus !== "APPROVED" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-green-600 hover:text-green-700"
+                            title="Approve provider"
+                            disabled={setStatus.isPending}
+                            onClick={() =>
+                              setStatus.mutate({ id: p.id, status: "APPROVED" })
+                            }
+                          >
+                            <Check className="h-4 w-4" /> Approve
+                          </Button>
+                        )}
+                        {p.providerStatus !== "REJECTED" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive"
+                            title="Reject provider"
+                            disabled={setStatus.isPending}
+                            onClick={() =>
+                              setStatus.mutate({ id: p.id, status: "REJECTED" })
+                            }
+                          >
+                            <X className="h-4 w-4" /> Reject
+                          </Button>
+                        )}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-destructive"
+                          title="Delete provider"
+                          onClick={() => setDeleteTarget(p)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setSelected(selected?.id === p.id ? null : p)
+                          }
+                        >
+                          {selected?.id === p.id ? "Close" : "View"}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -224,8 +323,8 @@ const AdminProviders = () => {
                     {selected.phoneNumber}
                   </div>
                 )}
-                <div className="mt-1 flex items-center gap-1 text-sm text-primary">
-                  <BadgeCheck className="h-4 w-4" /> Verified Provider
+                <div className="mt-1 text-sm">
+                  {providerStatusBadge(selected.providerStatus)}
                 </div>
               </div>
 
@@ -287,6 +386,28 @@ const AdminProviders = () => {
           </div>
         )}
       </div>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete provider "{deleteTarget?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes the account along with the provider's
+              services and related bookings. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteProvider.mutate(deleteTarget.id)}
+            >
+              {deleteProvider.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardShell>
   );
 };

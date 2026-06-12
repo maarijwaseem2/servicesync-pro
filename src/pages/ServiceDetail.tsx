@@ -26,17 +26,43 @@ const ServiceDetail = () => {
     },
   });
 
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["reviews", "service", id],
+    queryFn: () => api.get(`/reviews/service/${id}`).then((r) => r.data),
+    enabled: !!id,
+  });
+
+  const providerId = service?.provider?.id;
+  const { data: providerStats } = useQuery({
+    queryKey: ["provider-stats", providerId],
+    queryFn: () =>
+      api.get(`/reviews/provider-stats/${providerId}`).then((r) => r.data),
+    enabled: !!providerId,
+  });
+
   if (isLoading)
     return (
-      <div className="container py-20 text-center">Loading details...</div>
+      <div className="container py-12 text-center">Loading details...</div>
     );
   if (!service)
     return (
-      <div className="container py-20 text-center">Service not found.</div>
+      <div className="container py-12 text-center">Service not found.</div>
     );
 
   const matched = service.provider ? [service.provider] : [];
-  const reviewsList = []; // Backend doesn't have reviews yet
+  const reviewsList = (reviews as any[]).map((r: any) => ({
+    id: r.id,
+    customer: r.customer?.name || "Customer",
+    rating: r.rating || 0,
+    text: r.reviewText,
+    date: r.bookingDate || new Date(r.date).toLocaleDateString(),
+  }));
+  const avgRating =
+    reviewsList.length > 0
+      ? (
+          reviewsList.reduce((sum, r) => sum + r.rating, 0) / reviewsList.length
+        ).toFixed(1)
+      : null;
 
   return (
     <div className="min-h-screen">
@@ -62,11 +88,19 @@ const ServiceDetail = () => {
               {service.title}
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
-              <span className="flex items-center gap-1 text-warning">
-                <Star className="h-4 w-4 fill-current" />{" "}
-                <span className="font-semibold text-foreground">4.9</span>{" "}
-                <span className="text-muted-foreground">(150 reviews)</span>
-              </span>
+              {avgRating ? (
+                <span className="flex items-center gap-1 text-warning">
+                  <Star className="h-4 w-4 fill-current" />{" "}
+                  <span className="font-semibold text-foreground">{avgRating}</span>{" "}
+                  <span className="text-muted-foreground">
+                    ({reviewsList.length} review{reviewsList.length === 1 ? "" : "s"})
+                  </span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <Star className="h-4 w-4" /> No reviews yet
+                </span>
+              )}
               <span className="flex items-center gap-1 text-muted-foreground">
                 <Clock className="h-4 w-4" /> 1-2 hrs
               </span>
@@ -131,14 +165,25 @@ const ServiceDetail = () => {
                       {p.name?.charAt(0)}
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 font-display font-semibold">
+                      <div className="flex items-center gap-2 font-display font-semibold capitalize">
                         {p.name} <BadgeCheck className="h-4 w-4 text-primary" />
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Verified Pro · Pakistan
+                        Verified Pro{p.city ? ` · ${p.city}` : " · Pakistan"}
                       </div>
-                      <div className="mt-1 flex items-center gap-1 text-xs text-warning">
-                        <Star className="h-3 w-3 fill-current" /> 4.9 · 120 jobs
+                      <div className="mt-1 flex items-center gap-1 text-xs">
+                        {providerStats?.avgRating ? (
+                          <span className="flex items-center gap-1 text-warning">
+                            <Star className="h-3 w-3 fill-current" />
+                            {providerStats.avgRating}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">No ratings yet</span>
+                        )}
+                        <span className="text-muted-foreground">
+                          · {providerStats?.completedJobs ?? 0} job
+                          {(providerStats?.completedJobs ?? 0) === 1 ? "" : "s"} done
+                        </span>
                       </div>
                     </div>
                   </div>

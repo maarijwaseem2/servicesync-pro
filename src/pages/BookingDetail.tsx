@@ -245,6 +245,9 @@ const BookingDetail = () => {
                 )}
 
                 <Textarea
+                  id="review-text"
+                  name="reviewText"
+                  aria-label="Review text"
                   placeholder="Tell us about your experience (optional)"
                   value={reviewText}
                   onChange={(e) => setReviewText(e.target.value)}

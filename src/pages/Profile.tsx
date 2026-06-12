@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "../hooks/useAuth";
 import { api, assetUrl } from "@/lib/api";
+import { capitalizeName } from "@/lib/utils";
 import { Camera } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -102,7 +103,7 @@ const Profile = () => {
     });
   };
 
-  const displayName = form.name || user?.name || "User";
+  const displayName = capitalizeName(form.name || user?.name) || "User";
   const initials = displayName
     .split(" ")
     .map((x: string) => x[0])
@@ -182,6 +183,10 @@ const Profile = () => {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                if (form.phoneNumber && !/^\d{11}$/.test(form.phoneNumber)) {
+                  toast.error("Phone number must be exactly 11 digits.");
+                  return;
+                }
                 updateProfile.mutate(form);
               }}
               className="rounded-2xl border bg-card p-6 shadow-soft space-y-4"
@@ -198,7 +203,12 @@ const Profile = () => {
                 <Field
                   label="Phone"
                   value={form.phoneNumber}
-                  onChange={(v: string) => setForm({ ...form, phoneNumber: v })}
+                  inputMode="numeric"
+                  maxLength={11}
+                  placeholder="03001234567"
+                  onChange={(v: string) =>
+                    setForm({ ...form, phoneNumber: v.replace(/\D/g, "").slice(0, 11) })
+                  }
                 />
                 <Field
                   label="Email"
@@ -297,16 +307,21 @@ const Field = ({
   label: string;
   value: string;
   onChange: (v: string) => void;
-} & Record<string, unknown>) => (
-  <div>
-    <Label>{label}</Label>
-    <Input
-      className="mt-1.5"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      {...rest}
-    />
-  </div>
-);
+} & Record<string, unknown>) => {
+  const fieldId = `field-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  return (
+    <div>
+      <Label htmlFor={fieldId}>{label}</Label>
+      <Input
+        id={fieldId}
+        name={fieldId}
+        className="mt-1.5"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        {...rest}
+      />
+    </div>
+  );
+};
 
 export default Profile;

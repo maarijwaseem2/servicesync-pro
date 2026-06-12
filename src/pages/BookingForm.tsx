@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { CalendarIcon, CheckCircle2 } from "lucide-react";
@@ -48,16 +48,35 @@ const BookingForm = () => {
   const [slot, setSlot] = useState<string>();
   const [payment, setPayment] = useState("Online");
   const [done, setDone] = useState(false);
+  const [fullName, setFullName] = useState(user?.name || "");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+
+  // Prefill contact details from the user's profile so they only type them once
+  const { data: profile } = useQuery({
+    queryKey: ["users", user?.id],
+    queryFn: () => api.get(`/users/${user!.id}`).then((res) => res.data),
+    enabled: !!user?.id,
+  });
+
+  useEffect(() => {
+    if (!profile) return;
+    setFullName((v) => v || profile.name || "");
+    setPhone((v) => v || profile.phoneNumber || "");
+    setAddress((v) => v || profile.address || "");
+    setCity((v) => v || profile.city || "");
+  }, [profile]);
 
   if (isLoading)
     return (
-      <div className="container py-20 text-center">
+      <div className="container py-12 text-center">
         Loading service details...
       </div>
     );
   if (!service)
     return (
-      <div className="container py-20 text-center">Service not found.</div>
+      <div className="container py-12 text-center">Service not found.</div>
     );
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,6 +93,11 @@ const BookingForm = () => {
       return;
     }
 
+    if (!/^\d{11}$/.test(phone)) {
+      toast.error("Phone number must be exactly 11 digits.");
+      return;
+    }
+
     // Call API to create booking
     try {
       await api.post("/bookings", {
@@ -83,8 +107,20 @@ const BookingForm = () => {
         time: slot,
         totalAmount: Number(service.price) + 5,
         paymentMethod: payment,
+        address,
+        city,
+        phone,
         specialInstructions: (e.target as any).notes?.value || "",
       });
+      // Remember contact details on the profile for the next booking
+      api
+        .patch(`/users/${user.id}`, {
+          name: fullName || undefined,
+          phoneNumber: phone || undefined,
+          address: address || undefined,
+          city: city || undefined,
+        })
+        .catch(() => {});
       setDone(true);
     } catch (err) {
       toast.error("Failed to create booking.");
@@ -95,7 +131,7 @@ const BookingForm = () => {
     return (
       <div className="min-h-screen">
         <SiteHeader />
-        <div className="container grid place-items-center py-20">
+        <div className="container grid place-items-center py-12">
           <div className="max-w-md rounded-3xl border bg-card p-10 text-center shadow-elevated">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-success/15">
               <CheckCircle2 className="h-8 w-8 text-success" />
@@ -138,42 +174,70 @@ const BookingForm = () => {
           <div className="space-y-5 rounded-2xl border bg-card p-6 shadow-soft">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <Label>Full name</Label>
+                <Label htmlFor="booking-fullname">Full name</Label>
                 <Input
+                  id="booking-fullname"
+                  name="fullName"
+                  autoComplete="name"
                   required
-                  defaultValue={user?.name}
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   placeholder="Jane Cooper"
                   className="mt-1.5"
                 />
               </div>
               <div>
-                <Label>Phone</Label>
+                <Label htmlFor="booking-phone">Phone</Label>
                 <Input
+                  id="booking-phone"
+                  name="phone"
+                  autoComplete="tel"
                   required
                   type="tel"
-                  placeholder="+1 555 1234"
+                  inputMode="numeric"
+                  maxLength={11}
+                  value={phone}
+                  onChange={(e) =>
+                    setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))
+                  }
+                  placeholder="03001234567"
                   className="mt-1.5"
                 />
               </div>
             </div>
             <div>
-              <Label>Address</Label>
+              <Label htmlFor="booking-address">Address</Label>
               <Input
+                id="booking-address"
+                name="address"
+                autoComplete="street-address"
                 required
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
                 placeholder="Street, building, apt #"
                 className="mt-1.5"
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <Label>City / Area</Label>
-                <Input required placeholder="Downtown" className="mt-1.5" />
+                <Label htmlFor="booking-city">City / Area</Label>
+                <Input
+                  id="booking-city"
+                  name="city"
+                  autoComplete="address-level2"
+                  required
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="Karachi"
+                  className="mt-1.5"
+                />
               </div>
               <div>
-                <Label>Date</Label>
+                <Label htmlFor="booking-date">Date</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
+                      id="booking-date"
                       type="button"
                       variant="outline"
                       className={cn(
@@ -202,7 +266,7 @@ const BookingForm = () => {
             </div>
 
             <div>
-              <Label>Time slot</Label>
+              <span className="text-sm font-medium leading-none">Time slot</span>
               <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
                 {slots.map((s) => (
                   <button
@@ -223,8 +287,9 @@ const BookingForm = () => {
             </div>
 
             <div>
-              <Label>Additional notes</Label>
+              <Label htmlFor="booking-notes">Additional notes</Label>
               <Textarea
+                id="booking-notes"
                 name="notes"
                 placeholder="Anything we should know? (Optional)"
                 className="mt-1.5"
@@ -232,7 +297,7 @@ const BookingForm = () => {
             </div>
 
             <div>
-              <Label>Payment method</Label>
+              <span className="text-sm font-medium leading-none">Payment method</span>
               <RadioGroup
                 value={payment}
                 onValueChange={setPayment}

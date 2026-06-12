@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { api, assetUrl } from "@/lib/api";
+import { capitalizeName } from "@/lib/utils";
 import { Camera, BadgeCheck, ClipboardList, CheckCircle2, Star } from "lucide-react";
 import { DashboardShell } from "@/components/DashboardShell";
 import { Button } from "@/components/ui/button";
@@ -12,8 +13,11 @@ import { toast } from "sonner";
 
 const ProviderProfile = () => {
   const { user, login, token } = useAuth();
+  const queryClient = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   const [form, setForm] = useState({
     name: "",
@@ -41,6 +45,30 @@ const ProviderProfile = () => {
     queryKey: ["provider-bookings"],
     queryFn: () => api.get("/bookings").then((r) => r.data),
   });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => api.get("/categories").then((r) => r.data),
+  });
+
+  const createCategory = useMutation({
+    mutationFn: (name: string) => api.post("/categories", { name }),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      setForm((f) => ({ ...f, category: res.data.name }));
+      setNewCategoryName("");
+      setCreatingCategory(false);
+      toast.success("Category added");
+    },
+    onError: (err: any) =>
+      toast.error(err?.response?.data?.message || "Failed to create category"),
+  });
+
+  const handleNewCategory = () => {
+    const name = newCategoryName.trim();
+    if (!name) return;
+    createCategory.mutate(name);
+  };
 
   useEffect(() => {
     if (profile) {
@@ -106,7 +134,7 @@ const ProviderProfile = () => {
     });
   };
 
-  const displayName = form.name || user?.name || "Provider";
+  const displayName = capitalizeName(form.name || user?.name) || "Provider";
   const initials = displayName
     .split(" ")
     .map((x: string) => x[0])
@@ -205,6 +233,10 @@ const ProviderProfile = () => {
           <form
             onSubmit={(e) => {
               e.preventDefault();
+              if (form.phoneNumber && !/^\d{11}$/.test(form.phoneNumber)) {
+                toast.error("Phone number must be exactly 11 digits.");
+                return;
+              }
               updateProfile.mutate({
                 name: form.name,
                 phoneNumber: form.phoneNumber,
@@ -229,7 +261,12 @@ const ProviderProfile = () => {
               <Field
                 label="Phone"
                 value={form.phoneNumber}
-                onChange={(v: string) => setForm({ ...form, phoneNumber: v })}
+                inputMode="numeric"
+                maxLength={11}
+                placeholder="03001234567"
+                onChange={(v: string) =>
+                  setForm({ ...form, phoneNumber: v.replace(/\D/g, "").slice(0, 11) })
+                }
               />
               <Field
                 label="Email"
@@ -237,12 +274,52 @@ const ProviderProfile = () => {
                 value={form.email}
                 onChange={(v: string) => setForm({ ...form, email: v })}
               />
-              <Field
-                label="Service category"
-                value={form.category}
-                onChange={(v: string) => setForm({ ...form, category: v })}
-                placeholder="e.g. Electrician"
-              />
+              <div>
+                <Label htmlFor="provider-category">Service category</Label>
+                <select
+                  id="provider-category"
+                  title="Service category"
+                  value={form.category}
+                  onChange={(e) => {
+                    if (e.target.value === "__new__") {
+                      setCreatingCategory(true);
+                      setForm({ ...form, category: "" });
+                    } else {
+                      setCreatingCategory(false);
+                      setForm({ ...form, category: e.target.value });
+                    }
+                  }}
+                  className="mt-1.5 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="">Select a category</option>
+                  {(categories as any[]).map((c: any) => (
+                    <option key={c.id} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                  <option value="__new__">+ Create new category</option>
+                </select>
+                {creatingCategory && (
+                  <div className="mt-2 flex gap-2">
+                    <Input
+                      name="newCategoryName"
+                      aria-label="New category name"
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder="New category name"
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleNewCategory}
+                      disabled={createCategory.isPending || !newCategoryName.trim()}
+                    >
+                      {createCategory.isPending ? "Adding..." : "Add"}
+                    </Button>
+                  </div>
+                )}
+              </div>
               <Field
                 label="Experience (years)"
                 type="number"
@@ -258,8 +335,10 @@ const ProviderProfile = () => {
               />
             </div>
             <div>
-              <Label>Skills / Bio</Label>
+              <Label htmlFor="provider-bio">Skills / Bio</Label>
               <Textarea
+                id="provider-bio"
+                name="bio"
                 className="mt-1.5"
                 value={form.bio}
                 onChange={(e) => setForm({ ...form, bio: e.target.value })}
@@ -339,16 +418,21 @@ const Field = ({
   value: string;
   onChange: (v: string) => void;
   [k: string]: any;
-}) => (
-  <div>
-    <Label>{label}</Label>
-    <Input
-      className="mt-1.5"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      {...rest}
-    />
-  </div>
-);
+}) => {
+  const fieldId = `field-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  return (
+    <div>
+      <Label htmlFor={fieldId}>{label}</Label>
+      <Input
+        id={fieldId}
+        name={fieldId}
+        className="mt-1.5"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        {...rest}
+      />
+    </div>
+  );
+};
 
 export default ProviderProfile;

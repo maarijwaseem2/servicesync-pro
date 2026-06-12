@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Phone, MapPin, Calendar } from "lucide-react";
+import { Phone, MapPin, Calendar, Mail, User as UserIcon, ChevronDown, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardShell } from "@/components/DashboardShell";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -18,6 +18,7 @@ const tabLabels: Record<string, string> = {
 
 const ProviderBookings = () => {
   const [tab, setTab] = useState<(typeof tabs)[number]>("All");
+  const [openId, setOpenId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data: bookings = [], isLoading } = useQuery({
@@ -73,12 +74,60 @@ const ProviderBookings = () => {
                 <div className="font-display text-lg font-semibold">
                   {b.service?.title}
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  {b.customer?.name || "Customer"}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setOpenId(openId === b.id ? null : b.id)}
+                  className="mt-0.5 flex items-center gap-1 text-sm text-primary hover:underline"
+                  title="View customer details"
+                >
+                  <UserIcon className="h-3.5 w-3.5" />
+                  <span className="capitalize">{b.customer?.name || "Customer"}</span>
+                  <ChevronDown
+                    className={cn(
+                      "h-3.5 w-3.5 transition-transform",
+                      openId === b.id && "rotate-180",
+                    )}
+                  />
+                </button>
               </div>
               <StatusBadge status={b.status} />
             </div>
+
+            {openId === b.id && (
+              <div className="mt-4 rounded-xl border bg-secondary/30 p-4">
+                <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
+                  Customer details
+                </div>
+                <div className="grid gap-2 text-sm sm:grid-cols-2">
+                  <div className="flex items-center gap-2">
+                    <UserIcon className="h-4 w-4 text-primary" />
+                    <span className="capitalize">{b.customer?.name || "—"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-primary" />
+                    {b.customer?.email || "—"}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-primary" />
+                    {b.phone || b.customer?.phoneNumber || "No phone"}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-primary" />
+                    {b.city || b.customer?.city || "—"}
+                  </div>
+                  <div className="flex items-start gap-2 sm:col-span-2">
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    {b.address || b.customer?.address || "Address not provided"}
+                  </div>
+                  {b.specialInstructions && (
+                    <div className="sm:col-span-2 rounded-lg bg-background p-2 text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">Notes: </span>
+                      {b.specialInstructions}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             <div className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Calendar className="h-4 w-4 text-primary" />
@@ -86,11 +135,13 @@ const ProviderBookings = () => {
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <MapPin className="h-4 w-4 text-primary" />
-                {b.specialInstructions || "Location TBD"}
+                {[b.address, b.city].filter(Boolean).join(", ") ||
+                  b.customer?.address ||
+                  "Location TBD"}
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Phone className="h-4 w-4 text-primary" />
-                {b.customer?.phoneNumber || "No phone"}
+                {b.phone || b.customer?.phoneNumber || "No phone"}
               </div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { capitalizeName } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import {
   ClipboardList,
@@ -35,6 +36,12 @@ const ProviderDashboard = () => {
   const { data: bookings = [] } = useQuery({
     queryKey: ["provider-bookings"],
     queryFn: () => api.get("/bookings").then((res) => res.data),
+  });
+
+  const { data: profile } = useQuery({
+    queryKey: ["users", user?.id],
+    queryFn: () => api.get(`/users/${user!.id}`).then((res) => res.data),
+    enabled: !!user?.id,
   });
 
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -83,9 +90,23 @@ const ProviderDashboard = () => {
   return (
     <DashboardShell
       variant="provider"
-      title={`Welcome back, ${user?.name || "Provider"} 👋`}
+      title={`Welcome back, ${capitalizeName(user?.name) || "Provider"}`}
       subtitle="Here's what's happening with your jobs today."
     >
+      {profile?.providerStatus === "PENDING" && (
+        <div className="mb-6 rounded-2xl border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-800">
+          <span className="font-semibold">Account under review.</span> An admin
+          is reviewing your provider account. You'll be able to publish
+          services once your account is approved.
+        </div>
+      )}
+      {profile?.providerStatus === "REJECTED" && (
+        <div className="mb-6 rounded-2xl border border-red-300 bg-red-50 p-4 text-sm text-red-800">
+          <span className="font-semibold">Account not approved.</span> Your
+          provider account was rejected by an admin. Please contact support for
+          more information.
+        </div>
+      )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat
           icon={ClipboardList}

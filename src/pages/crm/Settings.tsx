@@ -76,12 +76,15 @@ const Section = ({ title, children }: any) => (
     {children}
   </div>
 );
-const Field = ({ label, ...rest }: any) => (
-  <div>
-    <Label>{label}</Label>
-    <Input className="mt-1.5" {...rest} />
-  </div>
-);
+const Field = ({ label, ...rest }: any) => {
+  const fieldId = `crm-field-${String(label).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  return (
+    <div>
+      <Label htmlFor={fieldId}>{label}</Label>
+      <Input id={fieldId} name={fieldId} className="mt-1.5" {...rest} />
+    </div>
+  );
+};
 const Toggle = ({ label, ...rest }: any) => (
   <div className="flex items-center justify-between rounded-lg border p-3">
     <span className="text-sm font-medium">{label}</span>

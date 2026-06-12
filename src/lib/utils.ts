@@ -5,6 +5,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Capitalize the first letter of each word in a name */
+export function capitalizeName(name?: string | null): string {
+  if (!name) return "";
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 export function getServiceImage(title: string, categoryName = ""): string {
   const t = (title + " " + categoryName).toLowerCase();
   if (t.includes("ac") || t.includes("air condition")) return "/assets/ac-repairing.jfif";

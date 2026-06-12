@@ -47,7 +47,11 @@ export default function Login() {
 
         <div className="space-y-4">
           <input
+            id="login-email"
+            name="email"
             type="email"
+            autoComplete="email"
+            aria-label="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
@@ -55,7 +59,11 @@ export default function Login() {
             required
           />
           <input
+            id="login-password"
+            name="password"
             type="password"
+            autoComplete="current-password"
+            aria-label="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter Your Password"

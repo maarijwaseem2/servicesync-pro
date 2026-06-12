@@ -66,6 +66,8 @@ const AdminCustomers = () => {
             <div className="flex flex-1 items-center gap-2 rounded-lg border bg-background px-3">
               <Search className="h-4 w-4 text-muted-foreground" />
               <Input
+                name="search-customers"
+                aria-label="Search customers"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search customers..."

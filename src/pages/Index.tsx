@@ -40,16 +40,35 @@ const Index = () => {
     },
   });
 
-  const services = remoteServices.map((s: any) => ({
-    id: s.id,
-    name: s.title,
-    price: s.price,
-    img: s.imageUrl ? assetUrl(s.imageUrl) : getServiceImage(s.title, s.category?.name || ""),
-    rating: 4.9,
-    reviews: 150,
-  }));
+  const { data: allReviews = [] } = useQuery({
+    queryKey: ["reviews"],
+    queryFn: () => api.get("/reviews").then((r) => r.data),
+  });
 
-  const categories = remoteCategories.map((c: any) => ({
+  const ratingsByService: Record<string, { sum: number; count: number }> = {};
+  (allReviews as any[]).forEach((r: any) => {
+    const sid = r.service?.id;
+    if (!sid || !r.rating) return;
+    if (!ratingsByService[sid]) ratingsByService[sid] = { sum: 0, count: 0 };
+    ratingsByService[sid].sum += r.rating;
+    ratingsByService[sid].count += 1;
+  });
+
+  const services = remoteServices.map((s: any) => {
+    const stats = ratingsByService[s.id];
+    return {
+      id: s.id,
+      name: s.title,
+      price: s.price,
+      img: s.imageUrl ? assetUrl(s.imageUrl) : getServiceImage(s.title, s.category?.name || ""),
+      rating: stats ? (stats.sum / stats.count).toFixed(1) : null,
+      reviews: stats?.count || 0,
+    };
+  });
+
+  const categories = remoteCategories
+    .filter((c: any) => c.isActive !== false)
+    .map((c: any) => ({
     ...c,
     image: getServiceImage(c.name),
     count: c.services?.length || 0,
@@ -77,15 +96,15 @@ const Index = () => {
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 gradient-soft" />
-        <div className="container grid gap-12 py-16 md:grid-cols-2 md:py-24 md:gap-8">
+        <div className="container grid gap-8 py-10 md:grid-cols-2 md:py-16 md:gap-8">
           <div className="flex flex-col justify-center">
             <span className="mb-4 inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
               <Sparkles className="h-3.5 w-3.5" /> 4.9 ★ rated by 50k+ homes
             </span>
             <h1 className="font-display text-4xl font-bold leading-[1.05] text-balance md:text-6xl">
-              Book trusted home services{" "}
+              Book Trusted Home Services{" "}
               <span className="bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-                near you
+                Near You
               </span>
             </h1>
             <p className="mt-5 max-w-lg text-lg text-muted-foreground">
@@ -100,6 +119,8 @@ const Index = () => {
               <div className="flex flex-1 items-center gap-2 px-3">
                 <Search className="h-5 w-5 text-muted-foreground" />
                 <Input
+                  name="hero-search"
+                  aria-label="Search services"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="What do you need fixed today?"
@@ -138,7 +159,7 @@ const Index = () => {
                   <CheckCircle2 className="h-5 w-5 text-success" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold">Job completed</div>
+                  <div className="text-sm font-semibold">Job Completed</div>
                   <div className="text-xs text-muted-foreground">
                     AC service · 4.9 ★
                   </div>
@@ -146,8 +167,8 @@ const Index = () => {
               </div>
             </div>
             <div className="absolute -right-4 top-10 hidden w-56 rounded-2xl border bg-card p-4 shadow-elevated md:block">
-              <div className="text-xs text-muted-foreground">Arriving in</div>
-              <div className="font-display text-2xl font-bold">42 min</div>
+              <div className="text-xs text-muted-foreground">Arriving In</div>
+              <div className="font-display text-2xl font-bold">42 mins</div>
               <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                 <MapPin className="h-3 w-3" /> 1.2 km away
               </div>
@@ -157,8 +178,8 @@ const Index = () => {
       </section>
 
       {/* Categories */}
-      <section className="container py-16">
-        <div className="mb-10 flex items-end justify-between">
+      <section className="container py-12">
+        <div className="mb-6 flex items-end justify-between">
           <div>
             <h2 className="font-display text-3xl font-bold md:text-4xl">
               Browse by category
@@ -199,9 +220,9 @@ const Index = () => {
       </section>
 
       {/* Popular services */}
-      <section className="bg-secondary/40 py-16">
+      <section className="bg-secondary/40 py-12">
         <div className="container">
-          <h2 className="mb-10 font-display text-3xl font-bold md:text-4xl">
+          <h2 className="mb-6 font-display text-3xl font-bold md:text-4xl">
             Popular services
           </h2>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -219,10 +240,16 @@ const Index = () => {
                   />
                 </div>
                 <div className="p-5 flex flex-col flex-1">
+                  {s.rating ? (
                   <div className="flex items-center gap-1 text-xs text-warning">
                     <Star className="h-3 w-3 fill-current" /> {s.rating}{" "}
                     <span className="text-muted-foreground">({s.reviews})</span>
                   </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Star className="h-3 w-3" /> No reviews yet
+                    </div>
+                  )}
                   <div className="mt-1 font-display font-semibold">
                     {s.name}
                   </div>
@@ -245,7 +272,7 @@ const Index = () => {
       </section>
 
       {/* How it works */}
-      <section className="container py-20" id="how-it-works">
+      <section className="container py-12" id="how-it-works">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-3xl font-bold md:text-4xl">
             How it works
@@ -254,7 +281,7 @@ const Index = () => {
             Three simple steps to a sorted home.
           </p>
         </div>
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
+        <div className="mt-8 grid gap-6 md:grid-cols-3">
           {[
             {
               n: "01",
@@ -291,9 +318,9 @@ const Index = () => {
       </section>
 
       {/* Why choose us */}
-      <section className="container py-16">
-        <div className="rounded-3xl gradient-hero p-10 text-primary-foreground md:p-16">
-          <div className="grid gap-10 md:grid-cols-2">
+      <section className="container py-12">
+        <div className="rounded-3xl gradient-hero p-8 text-primary-foreground md:p-12">
+          <div className="grid gap-8 md:grid-cols-2">
             <div>
               <h2 className="font-display text-3xl font-bold md:text-4xl">
                 Why HomeHero
@@ -325,8 +352,8 @@ const Index = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="container pb-20">
-        <h2 className="mb-10 text-center font-display text-3xl font-bold md:text-4xl">
+      <section className="container pb-12">
+        <h2 className="mb-6 text-center font-display text-3xl font-bold md:text-4xl">
           Loved by 50,000+ homes
         </h2>
         <div className="grid gap-5 md:grid-cols-3">
