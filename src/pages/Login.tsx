@@ -40,7 +40,7 @@ export default function Login() {
         className="p-8 bg-white border border-slate-200 shadow-sm rounded-xl space-y-6 w-full max-w-sm"
       >
         <h2 className="text-2xl font-bold tracking-tight text-slate-900 text-center">
-          ServiceSync Pro Login
+          Log in to Ustaad
         </h2>
 
         {error && <p className="text-red-500 text-sm">{error}</p>}

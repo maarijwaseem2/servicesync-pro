@@ -7,7 +7,7 @@ export const AuthLayout = ({ title, subtitle, children, footer }: { title: strin
     <div className="relative hidden gradient-hero p-12 text-primary-foreground lg:flex lg:flex-col">
       <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold">
         <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary-foreground/15 backdrop-blur"><Sparkles className="h-5 w-5" /></span>
-        HomeHero
+        Ustaad
       </Link>
       <div className="mt-auto">
         <h2 className="font-display text-4xl font-bold leading-tight">Trusted home services, just a tap away.</h2>
@@ -22,7 +22,7 @@ export const AuthLayout = ({ title, subtitle, children, footer }: { title: strin
       <div className="w-full max-w-md">
         <Link to="/" className="mb-8 flex items-center gap-2 font-display text-xl font-bold lg:hidden">
           <span className="grid h-9 w-9 place-items-center rounded-xl gradient-hero"><Sparkles className="h-5 w-5 text-primary-foreground" /></span>
-          HomeHero
+          Ustaad
         </Link>
         <h1 className="font-display text-3xl font-bold">{title}</h1>
         {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}

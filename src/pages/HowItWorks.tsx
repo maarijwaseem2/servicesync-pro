@@ -28,7 +28,7 @@ const HowItWorks = () => {
         <section className="bg-secondary/40 py-10 md:py-16">
           <div className="container max-w-4xl text-center">
             <h1 className="font-display text-4xl font-bold md:text-5xl">
-              How ServiceSync Pro Works
+              How Ustaad works
             </h1>
             <p className="mt-4 text-lg text-muted-foreground">
               Three simple steps to a sorted, spotless, and repaired home.

@@ -14,7 +14,7 @@ const CRMLogin = () => {
       <div className="relative hidden flex-col bg-sidebar p-12 text-sidebar-foreground lg:flex">
         <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold text-sidebar-primary-foreground">
           <span className="grid h-9 w-9 place-items-center rounded-xl gradient-hero"><BarChart3 className="h-5 w-5 text-primary-foreground" /></span>
-          Pipeline CRM
+          Ustaad
         </Link>
         <div className="mt-auto">
           <h2 className="font-display text-4xl font-bold leading-tight text-sidebar-primary-foreground">Close more deals with less effort.</h2>
@@ -38,10 +38,10 @@ const CRMLogin = () => {
         <div className="w-full max-w-md">
           <Link to="/" className="mb-8 flex items-center gap-2 font-display text-xl font-bold lg:hidden">
             <span className="grid h-9 w-9 place-items-center rounded-xl gradient-hero"><Sparkles className="h-5 w-5 text-primary-foreground" /></span>
-            Pipeline CRM
+            Ustaad
           </Link>
           <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"><Lock className="h-3 w-3" /> Admin only</span>
-          <h1 className="mt-3 font-display text-3xl font-bold">Sign in to Pipeline</h1>
+          <h1 className="mt-3 font-display text-3xl font-bold">Sign in to Ustaad</h1>
           <p className="mt-2 text-muted-foreground">Enter your admin credentials to continue.</p>
 
           <form

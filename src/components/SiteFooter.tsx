@@ -27,10 +27,10 @@ export const SiteFooter = () => {
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-slate-900">
               <Layers className="h-5 w-5 text-sky-400" />
             </span>
-            ServiceSync Pro
+            Ustaad
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
-            Trusted home services, booked in seconds.
+            Home services marketplace. Book a verified pro at your door.
           </p>
           <div className="mt-4 flex gap-3 text-muted-foreground">
             <Facebook className="h-5 w-5 hover:text-primary cursor-pointer" />
@@ -54,7 +54,7 @@ export const SiteFooter = () => {
         ))}
       </div>
       <div className="border-t py-6 text-center text-xs text-muted-foreground">
-        © 2024 ServiceSync Pro. All rights reserved.
+        © 2026 Ustaad. All rights reserved.
       </div>
     </footer>
   );

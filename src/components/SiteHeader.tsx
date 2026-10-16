@@ -34,7 +34,7 @@ export const SiteHeader = () => {
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-slate-900 shadow-glow">
             <Layers className="h-5 w-5 text-sky-400" />
           </span>
-          <span>ServiceSync Pro</span>
+          <span>Ustaad</span>
         </Link>
         <nav className="hidden items-center gap-8 md:flex">
           {links.map((l) => (
