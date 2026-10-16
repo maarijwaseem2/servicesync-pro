@@ -2,7 +2,7 @@
 
 **Home services marketplace for booking verified local pros.**
 
-[![Live demo](https://img.shields.io/badge/demo-live-0f172a?style=flat-square)](https://servicesync-pro.vercel.app)
+[![Live demo](https://img.shields.io/badge/demo-live-0f172a?style=flat-square)](https://ustaad-services.vercel.app)
 [![React](https://img.shields.io/badge/React-18-149eca?style=flat-square&logo=react&logoColor=white)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5-646cff?style=flat-square&logo=vite&logoColor=white)](https://vite.dev/)
@@ -12,7 +12,7 @@ Ustaad is where a household books a skilled pro for the job at the door. People 
 
 The name is the everyday word for a master craftsperson. The product is that marketplace, not a sync tool.
 
-**Live demo:** [servicesync-pro.vercel.app](https://servicesync-pro.vercel.app)
+**Live demo:** [ustaad-services.vercel.app](https://ustaad-services.vercel.app)
 
 The screenshots below are the public pages — home, catalog, a service, and how booking works — with the live catalog behind them.
 
