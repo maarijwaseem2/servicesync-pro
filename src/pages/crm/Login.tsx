@@ -52,10 +52,10 @@ const CRMLogin = () => {
               setTimeout(() => { toast.success("Welcome back"); nav("/crm"); }, 600);
             }}
           >
-            <div><Label htmlFor="crm-email">Email</Label><Input id="crm-email" name="email" autoComplete="email" className="mt-1.5" type="email" required defaultValue="admin@pipeline.app" /></div>
+            <div><Label htmlFor="crm-email">Email</Label><Input id="crm-email" name="email" autoComplete="email" className="mt-1.5" type="email" required /></div>
             <div>
               <div className="flex items-center justify-between"><Label htmlFor="crm-password">Password</Label><Link to="/forgot-password" className="text-xs text-primary hover:underline">Forgot?</Link></div>
-              <Input id="crm-password" name="password" autoComplete="current-password" className="mt-1.5" type="password" required defaultValue="••••••••" />
+              <Input id="crm-password" name="password" autoComplete="current-password" className="mt-1.5" type="password" required />
             </div>
             <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>{loading ? "Signing in..." : "Sign in"}</Button>
           </form>
