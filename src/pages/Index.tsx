@@ -323,7 +323,7 @@ const Index = () => {
           <div className="grid gap-8 md:grid-cols-2">
             <div>
               <h2 className="font-display text-3xl font-bold md:text-4xl">
-                Why HomeHero
+                Why Ustaad
               </h2>
               <p className="mt-3 text-primary-foreground/85">
                 Built around trust, speed and quality.

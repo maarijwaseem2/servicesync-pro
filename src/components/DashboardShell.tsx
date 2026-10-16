@@ -58,10 +58,7 @@ export const DashboardShell = ({
 }) => {
   const nav = variants[variant];
   const { logout } = useAuth();
-  const brand =
-    variant === "admin" || variant === "crm"
-      ? "ServiceSync Admin"
-      : "ServiceSync Pro";
+  const brand = "Ustaad";
   return (
     <div className="flex min-h-screen bg-secondary/30">
       <aside className="hidden w-64 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground md:flex">

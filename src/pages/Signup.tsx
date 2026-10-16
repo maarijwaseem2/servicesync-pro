@@ -49,7 +49,7 @@ export default function Signup() {
         className="p-8 bg-white border border-slate-200 shadow-sm rounded-xl space-y-6 w-full max-w-sm"
       >
         <h2 className="text-2xl font-bold tracking-tight text-slate-900 text-center">
-          Join ServiceSync Pro
+          Join Ustaad
         </h2>
 
         {error && <p className="text-red-500 text-sm text-center">{error}</p>}
